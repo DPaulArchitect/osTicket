@@ -131,6 +131,8 @@ extends VerySimpleModel {
                 $resp['id'] = $this->getId();
                 $resp['title'] = $this->getTitle();
                 $resp['response'] = $this->getResponseWithImages();
+                $resp['is_external'] = $this->getIsExternal();
+                
 
                 // Callback to strip or replace variables!
                 if ($cb && is_callable($cb))
@@ -176,6 +178,10 @@ extends VerySimpleModel {
 
     function getNotes() {
         return $this->ht['notes'];
+    }
+
+    function getIsExternal(){
+        return $this->ht['is_external'];
     }
 
     function getDeptId(){
@@ -228,14 +234,15 @@ extends VerySimpleModel {
         return $row ? $row[0] : null;
     }
 
-    static function getCannedResponses($deptId=0, $explicit=false) {
+    static function getCannedResponses($deptId=0, $explicit=false, $is_external) {
         global $thisstaff;
 
         $canned = static::objects()
-            ->filter(array('isenabled' => true))
+            ->filter(array('isenabled' => true, 'is_external__in' => $is_external)
+            )
             ->order_by('title')
             ->values_flat('canned_id', 'title');
-
+  
         if ($thisstaff) {
             $staffDepts = array();
 
@@ -254,17 +261,18 @@ extends VerySimpleModel {
 
         $responses = array();
         foreach ($canned as $row) {
-            list($id, $title) = $row;
+            list($id, $title, $is_external) = $row;
             $responses[$id] = $title;
         }
 
         return $responses;
     }
-
-    static function responsesByDeptId($deptId, $explicit=false) {
-        return self::getCannedResponses($deptId, $explicit);
+    
+    static function responsesByDeptId($deptId, $explicit=false, $is_external) {
+        return self::getCannedResponses($deptId, $explicit, $is_external);
     }
 
+       
     function save($refetch=false) {
         if ($this->dirty || $refetch)
             $this->updated = SqlFunction::NOW();
@@ -295,6 +303,7 @@ extends VerySimpleModel {
 
         $this->dept_id = $vars['dept_id'] ?: 0;
         $this->isenabled = $vars['isenabled'];
+        $this->is_external = $vars['is_external'];
         $this->title = $vars['title'];
         $this->response = Format::sanitize($vars['response']);
         $this->notes = Format::sanitize($vars['notes']);

@@ -19,12 +19,13 @@ class Knowledgebase {
 
     function __construct($id) {
         $res=db_query(
-            'SELECT title, isenabled, dept_id, created, updated '
+            'SELECT title, isenabled, dept_id, is_external, created, updated '
            .'FROM '.CANNED_TABLE.' WHERE canned_id='.db_input($id));
         if (!$res || !db_num_rows($res)) return false;
         list(   $this->title,
                 $this->enabled,
                 $this->department,
+                $this->is_external,
                 $this->created,
                 $this->updated) = db_fetch_row($res);
         $this->id = $id;
@@ -35,6 +36,9 @@ class Knowledgebase {
     /* ------------------> Getter methods <--------------------- */
     function getTitle() { return $this->title; }
     function isEnabled() { return !!$this->enabled; }
+   
+
+    function isExternal(){ return $this->is_external;}
     function getAnswer() {
         if (!isset($this->answer)) {
             if ($res=db_query('SELECT answer FROM '.CANNED_TABLE
@@ -49,6 +53,8 @@ class Knowledgebase {
     function attachments() { return $this->_attachments; }
     function getDeptId() { return $this->department; }
     function getDepartment() { return new Dept($this->department); }
+
+    function getIsExternal() { return $this->is_external;}
     function getId() { return $this->id; }
 
     /* ------------------> Setter methods <--------------------- */
@@ -60,6 +66,9 @@ class Knowledgebase {
     function setKeywords($words) { $this->keywords = $words; }
     function setAnswer($text) { $this->answer = $text; }
     function setDepartment($id) { $this->department = $id; }
+
+
+    function setIsExternal($val) {$this->is_external = !!$val; }
 
     /* -------------> Validation and Clean methods <------------ */
     function validate(&$errors, $what=null) {
@@ -97,6 +106,7 @@ class Knowledgebase {
         db_query(
             'UPDATE '.CANNED_TABLE.' SET title='.db_input($this->title)
                 .', isenabled='.db_input($this->enabled)
+                .', is_external='.db_input($this->is_external)
                 .', dept_id='.db_input($this->department)
                 .', updated=NOW()'
                 .((isset($this->answer))
@@ -117,10 +127,11 @@ class Knowledgebase {
     function create($hash, &$errors) {
         if (!self::validate($hash, $errors)) return false;
         db_query('INSERT INTO '.CANNED_TABLE
-            .' (title, answer, department, isenabled, created, updated) VALUES ('
+            .' (title, answer, department, is_external, isenabled, created, updated) VALUES ('
             .db_input($hash['title']).','
             .db_input($hash['answer']).','
             .db_input($hash['dept']).','
+            .db_input($hash['is_external']).','
             .db_input($hash['isenabled']).',NOW(),NOW()');
         return db_insert_id();
     }
@@ -135,6 +146,7 @@ class Knowledgebase {
         $obj->setTitle($new_stuff['title']);
         $obj->setAnswer($new_stuff['answer']);
         $obj->setDepartment($new_stuff['dept']);
+        $obj->setIsExternal($new_stuff['is_external']);
 
         return $obj->update();
     }
