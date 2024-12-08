@@ -1019,7 +1019,7 @@ if ($errors['err'] && isset($_POST['a'])) {
                         <option value='original'><?php echo __('Original Message'); ?></option>
                         <option value='lastmessage'><?php echo __('Last Message'); ?></option>
                         <?php
-                        if(($cannedResponses=Canned::responsesByDeptId($ticket->getDeptId()))) {
+                        if(($cannedResponses=Canned::responsesByDeptId($ticket->getDeptId(), null, [1,3] ))) {
                             echo '<option value="0" disabled="disabled">
                                 ------------- '.__('Premade Replies').' ------------- </option>';
                             foreach($cannedResponses as $id =>$title)
@@ -1166,24 +1166,71 @@ if ($errors['err'] && isset($_POST['a'])) {
                         <span class="error">&nbsp;<?php echo $errors['title']; ?></span>
                     </div>
                 </td></tr>
-                <tr><td colspan="2">
-                    <div class="error"><?php echo $errors['note']; ?></div>
-                    <textarea name="note" id="internal_note" cols="80"
-                        placeholder="<?php echo __('Note details'); ?>"
-                        rows="9" wrap="soft"
-                        class="<?php if ($cfg->isRichTextEnabled()) echo 'richtext';
-                            ?> draft draft-delete fullscreen" <?php
-    list($draft, $attrs) = Draft::getDraftAndDataAttrs('ticket.note', $ticket->getId(), $info['note']);
-    echo $attrs; ?>><?php echo ThreadEntryBody::clean($_POST ? $info['note'] : $draft);
-                        ?></textarea>
-                <div class="attachments">
-                <?php
-                    print $note_form->getField('attachments')->render();
-                ?>
-                </div>
+            <tr>
+                <td width="120" style="vertical-align">
+                    <label><strong><?php echo __('Response'); ?>:</strong><span class='error'>&nbsp;*</span></label>
                 </td>
-            </tr>
-            <tr><td colspan="2">&nbsp;</td></tr>
+                
+                <td>
+                <?php
+                if ($errors['internal_note'])
+                    echo sprintf('<div class="error">%s</div>',
+                            $errors['internal_note']);
+
+                if ($cfg->isCannedResponseEnabled()) { ?>              
+                    <div>
+                    <select id="cannedResp2" name="cannedResp2" >
+                        <option value="0" selected="selected"><?php echo __('Select a canned response');?></option>
+                        <option value='original'><?php echo __('Original Message'); ?></option>
+                        <option value='lastmessage'><?php echo __('Last Message'); ?></option>
+                        <?php
+                        if(($cannedResponses=Canned::responsesByDeptId($ticket->getDeptId(), null, [0,3] ))) {
+                            echo '<option value="0" disabled="disabled">
+                                ------------- '.__('Premade Replies').' ------------- </option>';
+                            foreach($cannedResponses as $id =>$title)
+                                echo sprintf('<option value="%d">%s</option>',$id,$title);
+                        }
+                        ?>
+                    </select>
+                    </div>
+                    </td>
+                </tr>
+            <td colspan="2">
+                <?php } # endif (canned-resonse-enabled)
+                    $signature = '';
+                    switch ($thisstaff->getDefaultSignatureType()) {
+                    case 'dept':
+                        if ($dept && $dept->canAppendSignature())
+                           $signature = $dept->getSignature();
+                       break;
+                    case 'mine':
+                        $signature = $thisstaff->getSignature();
+                        break;
+                    } ?>
+                    <input type="hidden" name="draft_id" value=""/>
+                    <br/>
+                <tr>
+                    <td colspan="2">
+                        <div class="error"><?php echo $errors['note']; ?></div>
+
+                        <textarea name="note" id="internal_note" cols="80"
+                        placeholder="<?php echo __('Note details'); ?>"
+                        rows="9" wrap="soft" class="<?php if ($cfg->isRichTextEnabled()) echo 'richtext';
+                            ?> draft draft-delete fullscreen" <?php
+                        list($draft, $attrs) = Draft::getDraftAndDataAttrs('ticket.note', $ticket->getId(), $info['internal_note']);
+                        echo $attrs; ?>><?php echo ThreadEntryBody::clean($_POST ? $info['internal_note'] : $draft);
+                        ?> 
+                        </textarea>
+
+                        <div class="attachments">
+                        <?php
+                        print $note_form->getField('attachments')->render();
+                        ?>
+                        </div>
+                    </td>
+                </tr>
+            
+                <tr><td colspan="2">&nbsp;</td></tr>
             <tr>
                 <td width="120">
                     <label><?php echo __('Ticket Status');?>:</label>
@@ -1220,6 +1267,8 @@ if ($errors['err'] && isset($_POST['a'])) {
            <input class="" type="reset" value="<?php echo __('Reset');?>">
        </p>
    </form>
+   
+   
    <?php } ?>
  </div>
  </div>
@@ -1439,9 +1488,18 @@ $(function() {
     $(this).parent().find('.select2-search__field').prop('disabled', true);
    });
 });
+
 function saveDraft() {
-    redactor = $('#response').redactor('plugin.draft');
-    if (redactor.opts.draftId)
+ 
+    noteRedactor = $('#internal_note').redactor('plugin.draft');
+    if (noteRedactor.opts.draftId) {
+        $('#internal_note').redactor('plugin.draft.saveDraft');
+    }
+    //save draft for response
+    responseRedactor = $('#response').redactor('plugin.draft');
+    if (responseRedactor.opts.draftId) {
         $('#response').redactor('plugin.draft.saveDraft');
+    }
 }
 </script>
+

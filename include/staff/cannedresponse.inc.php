@@ -7,6 +7,7 @@ if($canned && $_REQUEST['a']!='add'){
     $submit_text=__('Save Changes');
     $info=$canned->getInfo();
     $info['id']=$canned->getId();
+    $info['is_external']=$canned->getIsExternal();
     $qs += array('id' => $canned->getId());
     // Replace cid: scheme with downloadable URL for inline images
     $info['response'] = $canned->getResponseWithImages();
@@ -15,6 +16,7 @@ if($canned && $_REQUEST['a']!='add'){
     $action='create';
     $submit_text=__('Add Response');
     $info['isenabled']=isset($info['isenabled'])?$info['isenabled']:1;
+    $info['is_external']=isset($info['is_external'])?$info['is_external']:0;
     $qs += array('a' => $_REQUEST['a']);
 }
 $info=Format::htmlchars(($errors && $_POST)?$_POST:$info, true);
@@ -32,7 +34,7 @@ $info=Format::htmlchars(($errors && $_POST)?$_POST:$info, true);
 </h2>
  <table class="form_table fixed" width="940" border="0" cellspacing="0" cellpadding="2">
     <thead>
-        <tr><td></td><td></td></tr> <!-- For fixed table layout -->
+        <tr><td></td><td></td><td></td></tr> <!-- For fixed table layout -->
         <tr>
             <th colspan="2">
                 <em><?php echo __('Canned response settings');?></em>
@@ -48,6 +50,22 @@ $info=Format::htmlchars(($errors && $_POST)?$_POST:$info, true);
                 <label><input type="radio" name="isenabled" value="0" <?php
                         echo !$info['isenabled']?'checked="checked"':''; ?>>&nbsp;<?php echo __('Disabled'); ?>&nbsp;</label>
                 &nbsp;<span class="error">*&nbsp;<?php echo $errors['isenabled']; ?></span>
+            </td>
+        </tr>
+        <tr>
+            <td width="360" class="required"><?php echo __('Is message internal, external or Transfer');?></td>
+            <td>
+                <label><input type="radio" name="is_external" value="0" <?php
+                    echo $info['is_external']?'checked="checked"':''; ?>>&nbsp;<?php echo __('Internal'); ?>&nbsp;</label>
+                <label><input type="radio" name="is_external" value="1" <?php
+                        echo !$info['is_external']?'checked="checked"':''; ?>>&nbsp;<?php echo __('External'); ?>&nbsp;</label>
+                <div width="15px"></div>        
+                <label><input type="radio" name="is_external" value="3" <?php
+                        echo !$info['is_external']?'checked="checked"':''; ?>>&nbsp;<?php echo __('Both'); ?>&nbsp;</label>
+                
+                <label><input type="radio" name="is_external" value="2" <?php
+                        echo !$info['is_external']?'checked="checked"':''; ?>>&nbsp;<?php echo __('Transfer'); ?>&nbsp;</label>
+                &nbsp;<span class="error">*&nbsp;<?php echo $errors['is_external']; ?></span>
             </td>
         </tr>
         <tr>

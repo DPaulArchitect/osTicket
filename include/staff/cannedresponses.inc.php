@@ -13,14 +13,14 @@ foreach($thisstaff->dept_access as $da) {
 $departments = implode(',', $departments);
 
 $qs = array();
-$sql='SELECT canned.*, count(attach.file_id) as files, dept.name as department '.
+$sql='SELECT canned.*, count(attach.file_id) as files, dept.name as department, is_external as is_external'.
      ' FROM '.CANNED_TABLE.' canned '.
      ' LEFT JOIN '.DEPT_TABLE.' dept ON (dept.id=canned.dept_id) '.
      ' LEFT JOIN '.ATTACHMENT_TABLE.' attach
             ON (attach.object_id=canned.canned_id AND attach.`type`=\'C\' AND NOT attach.inline)';
 $sql.= sprintf(' WHERE canned.dept_id = 0 OR dept.id IN (%s)', $departments);
 
-$sortOptions=array('title'=>'canned.title','status'=>'canned.isenabled','dept'=>'department','updated'=>'canned.updated');
+$sortOptions=array('title'=>'canned.title','status'=>'canned.isenabled','dept'=>'department','updated'=>'canned.updated','is_external'=>'canned.is_external');
 $orderWays=array('DESC'=>'DESC','ASC'=>'ASC');
 $sort=($_REQUEST['sort'] && $sortOptions[strtolower($_REQUEST['sort'])])?strtolower($_REQUEST['sort']):'title';
 //Sorting options...
@@ -108,10 +108,11 @@ else
     <thead>
         <tr>
             <th width="4%">&nbsp;</th>
-            <th width="46%"><a <?php echo $title_sort; ?> href="canned.php?<?php echo $qstr; ?>&sort=title"><?php echo __('Title');?></a></th>
+            <th width="30%"><a  <?php echo $title_sort; ?> href="canned.php?<?php echo $qstr; ?>&sort=title"><?php echo __('Title');?></a></th>
             <th width="10%"><a  <?php echo $status_sort; ?> href="canned.php?<?php echo $qstr; ?>&sort=status"><?php echo __('Status');?></a></th>
-            <th width="20%"><a  <?php echo $dept_sort; ?> href="canned.php?<?php echo $qstr; ?>&sort=dept"><?php echo __('Department');?></a></th>
-            <th width="20%" nowrap><a  <?php echo $updated_sort; ?>href="canned.php?<?php echo $qstr; ?>&sort=updated"><?php echo __('Last Updated');?></a></th>
+            <th width="18%"><a  <?php echo $dept_sort; ?> href="canned.php?<?php echo $qstr; ?>&sort=dept"><?php echo __('Department');?></a></th>
+            <th width="18%" nowrap><a  <?php echo $updated_sort; ?>href="canned.php?<?php echo $qstr; ?>&sort=updated"><?php echo __('Last Updated');?></a></th>
+            <th width="18%"><a  <?php echo $is_external_sort; ?> href="canned.php?<?php echo $qstr; ?>&sort=is_external"><?php echo __('Internal, External or Transfer');?></a></th>
         </tr>
     </thead>
     <tbody>
@@ -134,8 +135,19 @@ else
                     <a href="canned.php?id=<?php echo $row['canned_id']; ?>"><?php echo Format::truncate($row['title'],200); echo "&nbsp;$files"; ?></a>&nbsp;
                 </td>
                 <td><?php echo $row['isenabled']?__('Active'):'<b>'.__('Disabled').'</b>'; ?></td>
-                <td><?php echo $row['department']?$row['department']:'&mdash; '.__('All Departments').' &mdash;'; ?></td>
+                <td><?php echo $row['department']?$row['department']:'&mdash; '.__('All Departments'); ?></td>
                 <td>&nbsp;<?php echo Format::datetime($row['updated']); ?></td>
+                <td>
+                    <?php if ($row['is_external'] === null): ?>
+                        Both
+                    <?php elseif ($row['is_external'] === '0'): ?>
+                        Internal
+                    <?php elseif ($row['is_external'] === '2'): ?>
+                        Transfer
+                    <?php else: ?>
+                        External
+                    <?php endif; ?>
+                </td>
             </tr>
             <?php
             } //end of while.
