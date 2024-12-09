@@ -5699,7 +5699,7 @@ class AssignmentForm extends Form {
     static $id = 'assign';
     var $_assignee = null;
     var $_assignees = null;
-
+    
 
     function getFields() {
 
@@ -5725,8 +5725,9 @@ class AssignmentForm extends Form {
                         'desc' => __('Maintain referral access to current assignees'))
                     )
                 ),
+            
             'comments' => new TextareaField(array(
-                    'id' => 3, 'label'=> '', 'required'=>false, 'default'=>'',
+                    'id' => 'assignText', 'name' => 'assignText', 'label'=> '', 'required'=>false, 'default'=>'',
                     'configuration' => array(
                         'html' => true,
                         'size' => 'small',
@@ -6139,7 +6140,7 @@ class TransferForm extends Form {
                     'desc' => __('Maintain referral access to current department'))
             )),
             'comments' => new TextareaField(array(
-                    'id' => 3,
+                    'id' => 'transferText',
                     'label'=> '',
                     'required'=>false,
                     'default'=>'',
